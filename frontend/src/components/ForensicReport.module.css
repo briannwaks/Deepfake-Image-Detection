@@ -1,0 +1,19 @@
+.wrapper {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.heading { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.item { display: flex; flex-direction: column; gap: 0.2rem; }
+.item dt { font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.item dd { font-size: 0.9rem; font-weight: 500; }
+
+.artifacts { margin-top: 1rem; }
+.artifacts h4 { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.artifacts ul { list-style: disc; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.artifacts li { font-size: 0.9rem; color: var(--danger); }
