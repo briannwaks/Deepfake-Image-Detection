@@ -10,14 +10,14 @@ def build(image: Image.Image, prediction: dict, processing_start: float) -> dict
 
     if prediction["prediction"] == "FAKE":
         score = prediction["raw_score"]
-        if score > 0.9:
-            artifacts.append("High-frequency GAN fingerprint")
+        if score > 0.90:
+            artifacts.append("High-confidence manipulation signature")
         if score > 0.75:
-            artifacts.append("Blending boundary anomaly")
-        artifacts.append("Facial symmetry inconsistency")
+            artifacts.append("ELA compression anomaly detected")
+        artifacts.append("Pixel-level inconsistency in facial region")
 
     return {
-        "model": settings.model_name,
+        "model": settings.hf_model_id,
         "processing_time_ms": elapsed_ms,
         "width": image.width,
         "height": image.height,

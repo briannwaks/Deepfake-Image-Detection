@@ -19,7 +19,7 @@ async def analyze(file: UploadFile = File(...)):
     start = time.perf_counter()
     image = load_image_from_bytes(data)
 
-    pred = detector.predict(image)
+    pred = await detector.predict(image)
     heatmap_uri = gradcam.generate(image)
     forensic = report.build(image, pred, start)
 

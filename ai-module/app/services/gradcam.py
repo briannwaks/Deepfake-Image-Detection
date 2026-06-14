@@ -1,48 +1,42 @@
 """
-Grad-CAM implementation that works with both EfficientNet and Xception.
-Returns a base64 PNG data-URI of the overlay so it can be sent directly
-in the JSON response without needing a file server.
-"""
-import numpy as np
-import tensorflow as tf
-import cv2
-from PIL import Image
+Error Level Analysis (ELA) — a standard digital forensics technique.
 
-from app.models.efficientnet import get_model
-from app.utils.image_processing import preprocess, image_to_base64_png
+Re-saves the image at a reduced JPEG quality and amplifies the pixel-level
+difference between the original and re-compressed version.  Regions that
+have been digitally manipulated retain less compression error than
+untouched areas, making them stand out as brighter zones in the heatmap.
+"""
+import io
+import numpy as np
+import cv2
+from PIL import Image, ImageChops, ImageEnhance
+
+from app.utils.image_processing import image_to_base64_png
 from app.config import settings
 
 
 def generate(image: Image.Image) -> str:
-    model = get_model()
-    tensor = preprocess(image, settings.input_size)
+    img = image.convert("RGB")
 
-    grad_model = tf.keras.Model(
-        inputs=model.inputs,
-        outputs=[model.get_layer(settings.gradcam_layer).output, model.output],
-    )
+    # Re-compress at reduced quality
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=settings.ela_quality)
+    buf.seek(0)
+    recompressed = Image.open(buf).convert("RGB")
 
-    with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(tensor, training=False)
-        loss = predictions[:, 0]
+    # Pixel-level difference
+    ela = ImageChops.difference(img, recompressed)
 
-    grads = tape.gradient(loss, conv_outputs)[0]
-    conv_outputs = conv_outputs[0]
+    # Amplify so the full 0-255 range is used
+    max_diff = max(ex[1] for ex in ela.getextrema()) or 1
+    ela = ImageEnhance.Brightness(ela).enhance(255.0 / max_diff)
 
-    weights = tf.reduce_mean(grads, axis=(0, 1))
-    cam = tf.reduce_sum(tf.multiply(weights, conv_outputs), axis=-1).numpy()
+    # Apply JET colormap for the heatmap overlay
+    gray = cv2.cvtColor(np.array(ela), cv2.COLOR_RGB2GRAY)
+    heatmap = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+    heatmap_rgb = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
 
-    cam = np.maximum(cam, 0)
-    cam = cam / (cam.max() + 1e-8)
-
-    # Resize CAM to original image size
-    h, w = settings.input_size, settings.input_size
-    cam_resized = cv2.resize(cam, (w, h))
-
-    heatmap = cv2.applyColorMap(np.uint8(255 * cam_resized), cv2.COLORMAP_JET)
-    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
-
-    original = np.array(image.resize((w, h)), dtype=np.float32) / 255.0
-    overlay = 0.5 * original + 0.5 * heatmap
+    original = np.array(img, dtype=np.float32) / 255.0
+    overlay = 0.55 * heatmap_rgb + 0.45 * original
 
     return image_to_base64_png(overlay)

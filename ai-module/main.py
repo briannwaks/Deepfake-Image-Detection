@@ -8,8 +8,8 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="DeepGuard AI Service",
-    description="Deepfake detection via EfficientNet/Xception + Grad-CAM",
-    version="1.0.0",
+    description="Deepfake detection via HuggingFace ViT + ELA forensic visualisation",
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -24,4 +24,4 @@ app.include_router(analysis_router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": settings.model_name}
+    return {"status": "ok", "model": settings.hf_model_id}
