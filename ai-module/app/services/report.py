@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timezone
 from PIL import Image
-from app.config import settings
+from app.config import ENSEMBLE_MODELS
 
 
 def build(image: Image.Image, prediction: dict, processing_start: float) -> dict:
@@ -17,7 +17,8 @@ def build(image: Image.Image, prediction: dict, processing_start: float) -> dict
         artifacts.append("Pixel-level inconsistency in facial region")
 
     return {
-        "model": settings.hf_model_id,
+        "models": ENSEMBLE_MODELS,
+        "model_scores": prediction.get("model_scores", {}),
         "processing_time_ms": elapsed_ms,
         "width": image.width,
         "height": image.height,

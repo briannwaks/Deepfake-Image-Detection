@@ -1,14 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.analysis import router as analysis_router
-from app.config import settings
+from app.config import settings, ENSEMBLE_MODELS
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="DeepGuard AI Service",
-    description="Deepfake detection via HuggingFace ViT + ELA forensic visualisation",
+    description="3-model ensemble deepfake detection via HuggingFace Inference API + ELA",
     version="2.0.0",
 )
 
@@ -24,4 +24,4 @@ app.include_router(analysis_router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": settings.hf_model_id}
+    return {"status": "ok", "models": ENSEMBLE_MODELS}

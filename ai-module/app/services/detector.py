@@ -1,35 +1,26 @@
 from PIL import Image
-from app.models.efficientnet import query
-from app.config import settings
+from app.models.efficientnet import query_ensemble
+from app.config import settings, ENSEMBLE_MODELS
 
 
 async def predict(image: Image.Image) -> dict:
-    results = await query(image)
+    raw_scores = await query_ensemble(image, ENSEMBLE_MODELS)
 
-    # Normalise label variants: "Fake"/"Real", "FAKE"/"REAL", "LABEL_1"/"LABEL_0"
-    scores: dict[str, float] = {}
-    for item in results:
-        label = item["label"].upper().strip()
-        scores[label] = item["score"]
+    # Keep only scores that came back successfully
+    valid = [s for s in raw_scores if s is not None]
 
-    fake_score = (
-        scores.get("FAKE")
-        or scores.get("LABEL_1")
-        or scores.get("1")
-        or 0.0
-    )
-    real_score = (
-        scores.get("REAL")
-        or scores.get("LABEL_0")
-        or scores.get("0")
-        or 0.0
-    )
+    if not valid:
+        raise RuntimeError("All models failed to respond — check your HF token and network.")
 
-    is_fake = fake_score >= settings.confidence_threshold
-    confidence = fake_score if is_fake else real_score
+    ensemble_fake_score = sum(valid) / len(valid)
+    is_fake = ensemble_fake_score >= settings.confidence_threshold
 
     return {
         "prediction": "FAKE" if is_fake else "REAL",
-        "confidence": round(confidence, 4),
-        "raw_score": round(fake_score, 4),
+        "confidence": round(ensemble_fake_score if is_fake else 1 - ensemble_fake_score, 4),
+        "raw_score": round(ensemble_fake_score, 4),
+        "model_scores": {
+            ENSEMBLE_MODELS[i]: round(s, 4) if s is not None else None
+            for i, s in enumerate(raw_scores)
+        },
     }

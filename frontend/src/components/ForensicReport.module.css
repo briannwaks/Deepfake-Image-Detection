@@ -3,9 +3,12 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.heading { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+.heading { font-size: 1.1rem; font-weight: 600; }
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 
@@ -13,7 +16,21 @@
 .item dt { font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
 .item dd { font-size: 0.9rem; font-weight: 500; }
 
-.artifacts { margin-top: 1rem; }
+/* Model ensemble scores */
+.modelScores h4 { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.modelScores ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+.modelScores li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
+
+.modelName { width: 200px; flex-shrink: 0; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.scoreBar { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.scoreFill { display: block; height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+
+.scoreValue { width: 44px; text-align: right; font-weight: 600; flex-shrink: 0; }
+
+.scoreNote { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+/* Artifacts */
 .artifacts h4 { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
 .artifacts ul { list-style: disc; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.3rem; }
 .artifacts li { font-size: 0.9rem; color: var(--danger); }
