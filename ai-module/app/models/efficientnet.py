@@ -23,9 +23,9 @@ def _image_bytes(image: Image.Image) -> bytes:
 def _extract_fake_score(results: list[dict]) -> float | None:
     """
     Normalise label variants across all three models:
-      dima806  → "Fake" / "Real"
-      prithiv  → "Deepfake" / "Real"  (or LABEL_0/LABEL_1)
-      Wvolf    → "Fake" / "Real"
+      dima806          → "Fake" / "Real"
+      Organika         → "artificial" / "human"
+      Wvolf            → "Fake" / "Real"
     Returns the fake probability, or None if parsing fails.
     """
     scores: dict[str, float] = {
@@ -33,6 +33,7 @@ def _extract_fake_score(results: list[dict]) -> float | None:
     }
     return (
         scores.get("FAKE")
+        or scores.get("ARTIFICIAL")
         or scores.get("DEEPFAKE")
         or scores.get("LABEL_1")
         or scores.get("1")
