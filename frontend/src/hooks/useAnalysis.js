@@ -7,12 +7,12 @@ export function useAnalysis() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  async function run(file) {
+  async function run(file, mode = 'ensemble') {
     setLoading(true)
     setError(null)
     setResult(null)
     try {
-      const data = await analyzeImage(file)
+      const data = await analyzeImage(file, mode)
       setResult(data)
     } catch (err) {
       const msg = err.response?.data?.detail || err.message || 'Analysis failed'

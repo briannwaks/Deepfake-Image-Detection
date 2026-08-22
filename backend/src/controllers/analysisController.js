@@ -14,6 +14,7 @@ export async function analyzeImage(req, res, next) {
       filename: req.file.originalname,
       contentType: req.file.mimetype,
     })
+    form.append('mode', req.body.mode || 'ensemble')
 
     logger.debug(`Forwarding image to AI service: ${config.aiServiceUrl}/analyze`)
 

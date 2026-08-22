@@ -5,9 +5,10 @@ const api = axios.create({
   timeout: 60000,
 })
 
-export async function analyzeImage(file) {
+export async function analyzeImage(file, mode = 'ensemble') {
   const form = new FormData()
   form.append('image', file)
+  form.append('mode', mode)
   const { data } = await api.post('/analyze', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })

@@ -3,10 +3,10 @@ from app.models.efficientnet import query_ensemble
 from app.config import settings, ENSEMBLE_MODELS
 
 
-async def predict(image: Image.Image) -> dict:
-    raw_scores = await query_ensemble(image, ENSEMBLE_MODELS)
+async def predict(image: Image.Image, models: list[str] | None = None) -> dict:
+    target_models = models if models is not None else ENSEMBLE_MODELS
+    raw_scores = await query_ensemble(image, target_models)
 
-    # Keep only scores that came back successfully
     valid = [s for s in raw_scores if s is not None]
 
     if not valid:
@@ -20,7 +20,7 @@ async def predict(image: Image.Image) -> dict:
         "confidence": round(ensemble_fake_score if is_fake else 1 - ensemble_fake_score, 4),
         "raw_score": round(ensemble_fake_score, 4),
         "model_scores": {
-            ENSEMBLE_MODELS[i]: round(s, 4) if s is not None else None
+            target_models[i]: round(s, 4) if s is not None else None
             for i, s in enumerate(raw_scores)
         },
     }
