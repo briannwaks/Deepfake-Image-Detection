@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { analyzeImage } from '../utils/api'
+import { auth, db } from '../firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import toast from 'react-hot-toast'
 
 export function useAnalysis() {
@@ -14,6 +16,18 @@ export function useAnalysis() {
     try {
       const data = await analyzeImage(file, mode)
       setResult(data)
+
+      const user = auth.currentUser
+      if (user) {
+        await addDoc(collection(db, 'users', user.uid, 'analyses'), {
+          prediction: data.prediction,
+          confidence: data.confidence,
+          raw_score: data.raw_score,
+          mode,
+          filename: file.name,
+          createdAt: serverTimestamp(),
+        })
+      }
     } catch (err) {
       const msg = err.response?.data?.detail || err.message || 'Analysis failed'
       setError(msg)

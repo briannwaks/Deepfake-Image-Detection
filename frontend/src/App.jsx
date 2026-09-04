@@ -7,6 +7,7 @@ import Analyze from './pages/Analyze'
 import About from './pages/About'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import History from './pages/History'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -26,6 +27,9 @@ function AppRoutes() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/analyze" element={
             <ProtectedRoute><Analyze /></ProtectedRoute>
+          } />
+          <Route path="/history" element={
+            <ProtectedRoute><History /></ProtectedRoute>
           } />
         </Routes>
       </main>

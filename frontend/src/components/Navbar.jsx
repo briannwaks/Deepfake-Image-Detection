@@ -24,6 +24,9 @@ export default function Navbar() {
         <NavLink to="/" end className={({ isActive }) => isActive ? styles.active : ''}>Home</NavLink>
         <NavLink to="/analyze" className={({ isActive }) => isActive ? styles.active : ''}>Analyze</NavLink>
         <NavLink to="/about" className={({ isActive }) => isActive ? styles.active : ''}>About</NavLink>
+        {user && (
+          <NavLink to="/history" className={({ isActive }) => isActive ? styles.active : ''}>History</NavLink>
+        )}
       </div>
       <div className={styles.auth}>
         {user ? (
