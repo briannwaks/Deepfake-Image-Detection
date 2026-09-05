@@ -29,6 +29,7 @@ def _gradcam(image: Image.Image) -> str:
         from pytorch_grad_cam import GradCAMPlusPlus
         from pytorch_grad_cam.utils.image import show_cam_on_image
         from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+        from transformers import AutoImageProcessor
         from app.models.efficientnet import _load_model
 
         model, processor = _load_model(_GRADCAM_MODEL)

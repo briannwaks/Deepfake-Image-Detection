@@ -19,14 +19,14 @@ _USE_LOCAL = bool(settings.models_dir)
 
 if _USE_LOCAL:
     import torch
-    from transformers import AutoModelForImageClassification, AutoFeatureExtractor
+    from transformers import AutoModelForImageClassification, AutoImageProcessor
 
     @lru_cache(maxsize=3)
     def _load_model(model_id: str):
         path = os.path.join(settings.models_dir, model_id.replace("/", "_"))
         logger.info("Loading model from %s", path)
         model = AutoModelForImageClassification.from_pretrained(path)
-        processor = AutoFeatureExtractor.from_pretrained(path)
+        processor = AutoImageProcessor.from_pretrained(path)
         model.eval()
         return model, processor
 
