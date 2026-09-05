@@ -28,6 +28,7 @@ def _gradcam(image: Image.Image) -> str:
         import torch
         from pytorch_grad_cam import GradCAMPlusPlus
         from pytorch_grad_cam.utils.image import show_cam_on_image
+        from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
         from app.models.efficientnet import _load_model
 
         model, processor = _load_model(_GRADCAM_MODEL)
@@ -43,7 +44,7 @@ def _gradcam(image: Image.Image) -> str:
         img_224 = image.convert("RGB").resize((224, 224))
         inputs = processor(images=img_224, return_tensors="pt")
 
-        # Find fake class index
+        # Always target the fake class so heatmap shows fake-indicating regions
         id2label = model.config.id2label
         fake_idx = next(
             (i for i, l in id2label.items() if l.lower() in ("fake", "artificial")),
@@ -55,7 +56,10 @@ def _gradcam(image: Image.Image) -> str:
             target_layers=[target_layer],
             reshape_transform=_reshape_transform,
         )
-        grayscale_cam = cam(input_tensor=inputs["pixel_values"], targets=None)
+        grayscale_cam = cam(
+            input_tensor=inputs["pixel_values"],
+            targets=[ClassifierOutputTarget(fake_idx)],
+        )
 
         img_array = np.array(img_224, dtype=np.float32) / 255.0
         overlay = show_cam_on_image(img_array, grayscale_cam[0], use_rgb=True)
