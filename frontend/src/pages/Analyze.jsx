@@ -116,7 +116,7 @@ export default function Analyze() {
         <div className={styles.results}>
           <ResultCard result={result} />
           {result.heatmap_url && (
-            <HeatmapViewer originalUrl={originalUrl} heatmapUrl={result.heatmap_url} />
+            <HeatmapViewer originalUrl={originalUrl} heatmapUrl={result.heatmap_url} elaUrl={result.ela_url} />
           )}
           {result.report && <ForensicReport report={result.report} />}
         </div>

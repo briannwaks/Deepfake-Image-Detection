@@ -19,7 +19,7 @@ export async function analyzeImage(req, res, next) {
     logger.debug(`Forwarding image to AI service: ${config.aiServiceUrl}/analyze`)
 
     const { data } = await axios.post(`${config.aiServiceUrl}/analyze`, form, {
-      headers: form.getHeaders(),
+      headers: { ...form.getHeaders(), 'ngrok-skip-browser-warning': 'true' },
       timeout: 55000,
     })
 

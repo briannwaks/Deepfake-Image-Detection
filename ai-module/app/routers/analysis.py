@@ -1,6 +1,7 @@
 import time
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services import detector, gradcam, report
+from app.models.efficientnet import _USE_LOCAL
 from app.utils.image_processing import load_image_from_bytes
 from app.config import settings, ENSEMBLE_MODELS
 
@@ -32,12 +33,18 @@ async def analyze(
     image = load_image_from_bytes(data)
 
     pred = await detector.predict(image, models=target_models)
-    heatmap_uri = gradcam.generate(image)
     forensic = report.build(image, pred, start)
+
+    if _USE_LOCAL:
+        heatmap_uri, ela_uri = gradcam.generate_both(image)
+    else:
+        heatmap_uri = gradcam.generate(image)
+        ela_uri = None
 
     return {
         **pred,
         "heatmap_url": heatmap_uri,
+        "ela_url": ela_uri,
         "report": forensic,
         "mode": mode,
     }

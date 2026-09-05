@@ -7,7 +7,7 @@ const router = Router()
 router.get('/health', async (req, res) => {
   let aiStatus = 'unreachable'
   try {
-    await axios.get(`${config.aiServiceUrl}/health`, { timeout: 3000 })
+    await axios.get(`${config.aiServiceUrl}/health`, { timeout: 3000, headers: { 'ngrok-skip-browser-warning': 'true' } })
     aiStatus = 'ok'
   } catch (_) {}
 

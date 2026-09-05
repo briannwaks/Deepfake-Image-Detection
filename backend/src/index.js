@@ -11,13 +11,13 @@ import logger from './utils/logger.js'
 
 const app = express()
 
-app.use(helmet())
 app.use(cors({ origin: config.corsOrigins, credentials: true }))
+app.use(helmet({ crossOriginResourcePolicy: false }))
 app.use(morgan('dev'))
 app.use(express.json())
 
 app.use(rateLimit({
-  windowMs: 60 * 1000,
+  windowMs: 60 * 1000,   
   max: 30,
   message: { error: 'Too many requests, please slow down.' },
 }))

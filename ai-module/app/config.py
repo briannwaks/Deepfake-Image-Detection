@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     confidence_threshold: float = 0.5
     max_image_size_mb: int = 10
     ela_quality: int = 90
+    models_dir: str = ""  # if set, load models locally instead of HF API
 
 
 settings = Settings()
