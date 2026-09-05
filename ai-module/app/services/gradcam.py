@@ -89,3 +89,8 @@ def _ela(image: Image.Image) -> str:
 
 def generate(image: Image.Image) -> str:
     return _gradcam(image) if _USE_LOCAL else _ela(image)
+
+
+def generate_both(image: Image.Image) -> tuple[str, str]:
+    """Returns (gradcam_url, ela_url) when local models are loaded."""
+    return _gradcam(image), _ela(image)
