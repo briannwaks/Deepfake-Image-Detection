@@ -55,7 +55,7 @@ def _gradcam(image: Image.Image) -> str:
             target_layers=[target_layer],
             reshape_transform=_reshape_transform,
         )
-        grayscale_cam = cam(input_tensor=inputs["pixel_values"])
+        grayscale_cam = cam(input_tensor=inputs["pixel_values"], targets=None)
 
         img_array = np.array(img_224, dtype=np.float32) / 255.0
         overlay = show_cam_on_image(img_array, grayscale_cam[0], use_rgb=True)
