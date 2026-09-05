@@ -13,7 +13,7 @@ def build(image: Image.Image, prediction: dict, processing_start: float) -> dict
         if score > 0.90:
             artifacts.append("High-confidence manipulation signature")
         if score > 0.75:
-            artifacts.append("ELA compression anomaly detected")
+            artifacts.append("Grad-CAM activation anomaly detected")
         artifacts.append("Pixel-level inconsistency in facial region")
 
     return {
