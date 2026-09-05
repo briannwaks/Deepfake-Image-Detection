@@ -4,7 +4,7 @@ export default function HeatmapViewer({ originalUrl, heatmapUrl, elaUrl }) {
   return (
     <div className={styles.wrapper}>
       <h3 className={styles.heading}>Forensic Analysis</h3>
-      <div className={styles.grid}>
+      <div className={elaUrl ? styles.grid : styles.gridTwo}>
         <figure>
           <img src={originalUrl} alt="Original" className={styles.img} />
           <figcaption>Original</figcaption>
