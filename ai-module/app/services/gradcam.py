@@ -28,32 +28,34 @@ def _gradcam(image: Image.Image) -> str:
         import torch
         from pytorch_grad_cam import GradCAMPlusPlus
         from pytorch_grad_cam.utils.image import show_cam_on_image
-        from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-        from transformers import AutoImageProcessor
         from app.models.efficientnet import _load_model
 
         model, processor = _load_model(_GRADCAM_MODEL)
+
+        # Wrap model so it returns raw logits — GradCAM can't handle HF ModelOutput
+        class LogitsWrapper(torch.nn.Module):
+            def __init__(self, m): super().__init__(); self.m = m
+            def forward(self, x): return self.m(x).logits
+
+        wrapped = LogitsWrapper(model)
         target_layer = model.vit.layers[-1].layernorm_before
 
         img_224 = image.convert("RGB").resize((224, 224))
         inputs = processor(images=img_224, return_tensors="pt")
 
-        cam = GradCAMPlusPlus(
-            model=model,
-            target_layers=[target_layer],
-            reshape_transform=_reshape_transform,
-        )
-
-        # Target the fake class (index 1 for dima806)
+        # Find fake class index
         id2label = model.config.id2label
         fake_idx = next(
             (i for i, l in id2label.items() if l.lower() in ("fake", "artificial")),
             1,
         )
-        grayscale_cam = cam(
-            input_tensor=inputs["pixel_values"],
-            targets=[ClassifierOutputTarget(fake_idx)],
+
+        cam = GradCAMPlusPlus(
+            model=wrapped,
+            target_layers=[target_layer],
+            reshape_transform=_reshape_transform,
         )
+        grayscale_cam = cam(input_tensor=inputs["pixel_values"])
 
         img_array = np.array(img_224, dtype=np.float32) / 255.0
         overlay = show_cam_on_image(img_array, grayscale_cam[0], use_rgb=True)
