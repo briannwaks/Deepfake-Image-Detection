@@ -33,7 +33,7 @@ def _gradcam(image: Image.Image) -> str:
         from app.models.efficientnet import _load_model
 
         model, processor = _load_model(_GRADCAM_MODEL)
-        target_layer = model.vit.encoder.layer[-1].layernorm_before
+        target_layer = model.vit.layers[-1].layernorm_before
 
         img_224 = image.convert("RGB").resize((224, 224))
         inputs = processor(images=img_224, return_tensors="pt")
