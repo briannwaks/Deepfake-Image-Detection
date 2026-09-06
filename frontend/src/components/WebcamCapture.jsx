@@ -1,62 +1,98 @@
-import { useEffect, useRef, useState } from 'react'
-import { FiCamera, FiX } from 'react-icons/fi'
-import styles from './WebcamCapture.module.css'
+import { useEffect, useRef, useState } from "react";
+import { FiCamera, FiX } from "react-icons/fi";
+import styles from "./WebcamCapture.module.css";
 
 export default function WebcamCapture({ onCapture, onClose }) {
-  const videoRef = useRef(null)
-  const streamRef = useRef(null)
-  const [ready, setReady] = useState(false)
-  const [error, setError] = useState(null)
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     navigator.mediaDevices
       .getUserMedia({ video: true })
       .then((stream) => {
-        streamRef.current = stream
+        if (cancelled) {
+          // Close/unmount happened before the camera was ready — kill it now.
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = stream
+          videoRef.current.srcObject = stream;
         }
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.message));
 
-    return () => stopStream()
-  }, [])
+    return () => {
+      cancelled = true;
+      stopStream();
+    };
+  }, []);
 
   function stopStream() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop())
-      streamRef.current = null
+    const stream = streamRef.current ?? videoRef.current?.srcObject;
+
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
     }
+
+    if (streamRef.current) {
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.srcObject = null;
+    }
+
+    setReady(false);
+  }
+
+  function handleClose() {
+    stopStream();
+    onClose?.();
   }
 
   function capture() {
-    const video = videoRef.current
-    if (!video || video.videoWidth === 0) return
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0) return;
 
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    canvas.getContext('2d').drawImage(video, 0, 0)
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
 
-    stopStream()
+    stopStream();
 
     canvas.toBlob(
       (blob) => {
-        if (!blob) return
-        const file = new File([blob], 'webcam-capture.jpg', { type: 'image/jpeg' })
-        onCapture(file)
+        if (!blob) return;
+        const file = new File([blob], "webcam-capture.jpg", {
+          type: "image/jpeg",
+        });
+        onCapture(file);
       },
-      'image/jpeg',
+      "image/jpeg",
       0.92,
-    )
+    );
   }
 
   return (
-    <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className={styles.overlay}
+      onClick={(e) => e.target === e.currentTarget && handleClose()}
+    >
       <div className={styles.modal}>
         <div className={styles.header}>
           <h3>Take a Photo</h3>
-          <button className={styles.close} onClick={onClose} aria-label="Close">
+          <button
+            className={styles.close}
+            onClick={handleClose}
+            aria-label="Close"
+          >
             <FiX size={20} />
           </button>
         </div>
@@ -80,14 +116,14 @@ export default function WebcamCapture({ onCapture, onClose }) {
 
         <div className={styles.actions}>
           <button className="btn-primary" onClick={capture} disabled={!ready}>
-            <FiCamera size={16} style={{ marginRight: '0.4rem' }} />
+            <FiCamera size={16} style={{ marginRight: "0.4rem" }} />
             Capture
           </button>
-          <button className={styles.cancelBtn} onClick={onClose}>
+          <button className={styles.cancelBtn} onClick={handleClose}>
             Cancel
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }
