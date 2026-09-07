@@ -7,7 +7,7 @@ const api = axios.create({
   timeout: 120000,
 });
 
-export async function analyzeImage(file, mode = "ensemble") {
+export async function analyzeImage(file, mode = "ai-art") {
   const form = new FormData();
   form.append("image", file);
   form.append("mode", mode);
