@@ -1,3 +1,5 @@
+#detector file
+
 from PIL import Image
 from app.models.efficientnet import query_ensemble
 from app.config import settings, ENSEMBLE_MODELS

@@ -36,9 +36,9 @@ async def analyze(
     forensic = report.build(image, pred, start)
 
     if _USE_LOCAL:
-        heatmap_uri, ela_uri = gradcam.generate_both(image)
+        heatmap_uri, ela_uri = gradcam.generate_both(image, target_models)
     else:
-        heatmap_uri = gradcam.generate(image)
+        heatmap_uri = gradcam.generate(image, target_models)
         ela_uri = None
 
     return {

@@ -23,6 +23,7 @@ ai-module/models/*.h5
 ai-module/models/*.pt
 ai-module/models/*.pth
 ai-module/models/*.keras
+ai-module/models/*
 
 # ── Uploads / temp files ──────────────────────────────────────────────────────
 backend/uploads/

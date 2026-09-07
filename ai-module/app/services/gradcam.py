@@ -13,16 +13,24 @@ from app.models.efficientnet import _USE_LOCAL
 
 logger = logging.getLogger(__name__)
 
-_GRADCAM_MODEL = "dima806/deepfake_vs_real_image_detection"
 
-
-def _reshape_transform(tensor):
-    """Reshape ViT sequence output to spatial grid for Grad-CAM."""
-    result = tensor[:, 1:, :].reshape(tensor.size(0), 14, 14, tensor.size(2))
+def _vit_reshape_transform(tensor):
+    """Reshape ViT sequence output (with CLS token) to a spatial grid."""
+    seq_len = tensor.size(1) - 1  # exclude CLS token
+    grid = int(seq_len ** 0.5)
+    result = tensor[:, 1:, :].reshape(tensor.size(0), grid, grid, tensor.size(2))
     return result.transpose(2, 3).transpose(1, 2)
 
 
-def _gradcam(image: Image.Image) -> str:
+def _swin_reshape_transform(tensor):
+    """Reshape Swin sequence output (no CLS token) to a spatial grid."""
+    seq_len = tensor.size(1)
+    grid = int(seq_len ** 0.5)
+    result = tensor.reshape(tensor.size(0), grid, grid, tensor.size(2))
+    return result.transpose(2, 3).transpose(1, 2)
+
+
+def _gradcam(image: Image.Image, model_id: str) -> str:
     try:
         import torch
         from pytorch_grad_cam import GradCAMPlusPlus
@@ -30,17 +38,27 @@ def _gradcam(image: Image.Image) -> str:
         from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
         from app.models.efficientnet import _load_model
 
-        model, processor = _load_model(_GRADCAM_MODEL)
+        model, processor = _load_model(model_id)
+        model_type = model.config.model_type
 
         class LogitsWrapper(torch.nn.Module):
             def __init__(self, m): super().__init__(); self.m = m
             def forward(self, x): return self.m(x).logits
 
         wrapped = LogitsWrapper(model)
-        target_layer = model.vit.layers[-1].layernorm_before
 
-        img_224 = image.convert("RGB").resize((224, 224))
-        inputs = processor(images=img_224, return_tensors="pt")
+        if model_type == "vit":
+            target_layer = model.vit.layers[-1].layernorm_before
+            reshape_transform = _vit_reshape_transform
+        elif model_type == "swin":
+            target_layer = model.swin.encoder.layers[-1].blocks[-1].layernorm_before
+            reshape_transform = _swin_reshape_transform
+        else:
+            raise ValueError(f"Grad-CAM not implemented for model_type={model_type!r}")
+
+        inputs = processor(images=image.convert("RGB"), return_tensors="pt")
+        _, _, h, w = inputs["pixel_values"].shape
+        img_resized = image.convert("RGB").resize((w, h))
 
         id2label = model.config.id2label
         fake_idx = next(
@@ -51,19 +69,19 @@ def _gradcam(image: Image.Image) -> str:
         cam = GradCAMPlusPlus(
             model=wrapped,
             target_layers=[target_layer],
-            reshape_transform=_reshape_transform,
+            reshape_transform=reshape_transform,
         )
         grayscale_cam = cam(
             input_tensor=inputs["pixel_values"],
             targets=[ClassifierOutputTarget(fake_idx)],
         )
 
-        img_array = np.array(img_224, dtype=np.float32) / 255.0
+        img_array = np.array(img_resized, dtype=np.float32) / 255.0
         overlay = show_cam_on_image(img_array, grayscale_cam[0], use_rgb=True)
-        return image_to_base64_png(np.array(overlay))
+        return image_to_base64_png(overlay.astype(np.float32) / 255.0)  # ← normalize back to [0,1] before encoding
 
     except Exception as exc:
-        logger.warning("Grad-CAM failed, falling back to ELA: %s", exc)
+        logger.warning("Grad-CAM failed for %s, falling back to ELA: %s", model_id, exc)
         return _ela(image)
 
 
@@ -87,10 +105,12 @@ def _ela(image: Image.Image) -> str:
     return image_to_base64_png(overlay)
 
 
-def generate(image: Image.Image) -> str:
-    return _gradcam(image) if _USE_LOCAL else _ela(image)
+def generate(image: Image.Image, model_ids: list[str]) -> str:
+    """model_ids: the model(s) actually used for this request's prediction.
+    Grad-CAM (when local) runs against the first/primary model in the list."""
+    return _gradcam(image, model_ids[0]) if _USE_LOCAL else _ela(image)
 
 
-def generate_both(image: Image.Image) -> tuple[str, str]:
+def generate_both(image: Image.Image, model_ids: list[str]) -> tuple[str, str]:
     """Returns (gradcam_url, ela_url) when local models are loaded."""
-    return _gradcam(image), _ela(image)
+    return _gradcam(image, model_ids[0]), _ela(image)

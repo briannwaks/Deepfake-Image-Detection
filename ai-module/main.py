@@ -1,3 +1,10 @@
+#main file
+import os
+from app.config import settings
+
+if settings.models_dir:
+    os.environ["HF_HOME"] = os.path.abspath(settings.models_dir)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.analysis import router as analysis_router
